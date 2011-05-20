@@ -14,15 +14,19 @@ $.extend($.fn, {
 		var self = this, q;
 
 		// Handle different call patterns
-		if ($.isFunction(type))
-			fn2 = fn, fn = type, type = undefined;
+		if ($.isFunction(type)){
+			fn2 = fn;
+			fn = type;
+			type = undefined;
+		}
 
 		// See if Live Query already exists
 		$.each( $.livequery.queries, function(i, query) {
-			if ( self.selector == query.selector && self.context == query.context &&
-				type == query.type && (!fn || fn.$lqguid == query.fn.$lqguid) && (!fn2 || fn2.$lqguid == query.fn2.$lqguid) )
-					// Found the query, exit the each loop
-					return (q = query) && false;
+			if ( self.selector == query.selector && self.context == query.context && type == query.type && (!fn || fn.$lqguid == query.fn.$lqguid) && (!fn2 || fn2.$lqguid == query.fn2.$lqguid) ){
+				// Found the query, exit the each loop
+				q = query;
+				return false;
+			}
 		});
 
 		// Create new Live Query if it wasn't found
@@ -34,7 +38,7 @@ $.extend($.fn, {
 		// Run it immediately for the first time
 		q.run();
 
-		// Contnue the chain
+		// Continue the chain
 		return this;
 	},
 
@@ -42,14 +46,17 @@ $.extend($.fn, {
 		var self = this;
 
 		// Handle different call patterns
-		if ($.isFunction(type))
-			fn2 = fn, fn = type, type = undefined;
+		if ($.isFunction(type)){
+			fn2 = fn;
+			fn = type;
+			type = undefined;
+		}
 
 		// Find the Live Query based on arguments and stop it
 		$.each( $.livequery.queries, function(i, query) {
-			if ( self.selector == query.selector && self.context == query.context &&
-				(!type || type == query.type) && (!fn || fn.$lqguid == query.fn.$lqguid) && (!fn2 || fn2.$lqguid == query.fn2.$lqguid) && !this.stopped )
-					$.livequery.stop(query.id);
+			if ( self.selector == query.selector && self.context == query.context && (!type || type == query.type) && (!fn || fn.$lqguid == query.fn.$lqguid) && (!fn2 || fn2.$lqguid == query.fn2.$lqguid) && !this.stopped ){
+				$.livequery.stop(query.id);
+			}
 		});
 
 		// Continue the chain
@@ -71,7 +78,9 @@ $.livequery = function(selector, context, type, fn, fn2) {
 
 	// Mark the functions for matching later on
 	fn.$lqguid = fn.$lqguid || $.livequery.guid++;
-	if (fn2) fn2.$lqguid = fn2.$lqguid || $.livequery.guid++;
+	if (fn2){
+		fn2.$lqguid = fn2.$lqguid || $.livequery.guid++;
+	}
 
 	// Return the Live Query
 	return this;
@@ -81,14 +90,15 @@ $.livequery.prototype = {
 	stop: function() {
 		var query = this;
 
-		if ( this.type )
+		if ( this.type ){
 			// Unbind all bound events
 			this.elements.unbind(this.type, this.fn);
-		else if (this.fn2)
+		} else if (this.fn2){
 			// Call the second function for all matched elements
 			this.elements.each(function(i, el) {
 				query.fn2.apply(el);
 			});
+		}
 
 		// Clear out matched elements
 		this.elements = [];
@@ -99,7 +109,9 @@ $.livequery.prototype = {
 
 	run: function() {
 		// Short-circuit if stopped
-		if ( this.stopped ) return;
+		if ( this.stopped ){
+			return;
+		}
 		var query = this;
 
 		var oEls = this.elements,
@@ -114,24 +126,27 @@ $.livequery.prototype = {
 			nEls.bind(this.type, this.fn);
 
 			// Unbind events to elements no longer matched
-			if (oEls.length > 0)
+			if (oEls.length > 0){
 				$.each(oEls, function(i, el) {
-					if ( $.inArray(el, els) < 0 )
+					if ( $.inArray(el, els) < 0 ){
 						$.event.remove(el, query.type, query.fn);
+					}
 				});
-		}
-		else {
+			}
+		} else {
 			// Call the first function for newly matched elements
 			nEls.each(function() {
 				query.fn.apply(this);
 			});
 
 			// Call the second function for elements no longer matched
-			if ( this.fn2 && oEls.length > 0 )
+			if ( this.fn2 && oEls.length > 0 ){
 				$.each(oEls, function(i, el) {
-					if ( $.inArray(el, els) < 0 )
+					if ( $.inArray(el, els) < 0 ){
 						query.fn2.apply(el);
+					}
 				});
+			}
 		}
 	}
 };
@@ -147,8 +162,9 @@ $.extend($.livequery, {
 		if ( $.livequery.running && $.livequery.queue.length ) {
 			var length = $.livequery.queue.length;
 			// Run each Live Query currently in the queue
-			while ( length-- )
+			while ( length-- ){
 				$.livequery.queries[ $.livequery.queue.shift() ].run();
+			}
 		}
 	},
 
@@ -167,7 +183,9 @@ $.extend($.livequery, {
 	registerPlugin: function() {
 		$.each( arguments, function(i,n) {
 			// Short-circuit if the method doesn't exist
-			if (!$.fn[n]) return;
+			if (!$.fn[n]){
+				return;
+			}
 
 			// Save a reference to the original method
 			var old = $.fn[n];
@@ -189,31 +207,36 @@ $.extend($.livequery, {
 	run: function(id) {
 		if (id != undefined) {
 			// Put the particular Live Query in the queue if it doesn't already exist
-			if ( $.inArray(id, $.livequery.queue) < 0 )
+			if ( $.inArray(id, $.livequery.queue) < 0 ){
 				$.livequery.queue.push( id );
-		}
-		else
+			}
+		} else {
 			// Put each Live Query in the queue if it doesn't already exist
 			$.each( $.livequery.queries, function(id) {
-				if ( $.inArray(id, $.livequery.queue) < 0 )
+				if ( $.inArray(id, $.livequery.queue) < 0 ) {
 					$.livequery.queue.push( id );
+				}
 			});
+		}
 
 		// Clear timeout if it already exists
-		if ($.livequery.timeout) clearTimeout($.livequery.timeout);
+		if ($.livequery.timeout){
+			clearTimeout($.livequery.timeout);
+		}
 		// Create a timeout to check the queue and actually run the Live Queries
 		$.livequery.timeout = setTimeout($.livequery.checkQueue, 20);
 	},
 
 	stop: function(id) {
-		if (id != undefined)
+		if (id != undefined){
 			// Stop are particular Live Query
 			$.livequery.queries[ id ].stop();
-		else
+		} else {
 			// Stop all Live Queries
 			$.each( $.livequery.queries, function(id) {
 				$.livequery.queries[ id ].stop();
 			});
+		}
 	}
 });
 
